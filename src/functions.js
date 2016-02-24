@@ -17,7 +17,7 @@ function StringBuilder() {
 			var x = arguments[i];
 
 			if(typeof x === "function") {
-				x = x();
+				x = x.call(this);
 
 				if(typeof x === "number") {
 					x = x.toString();
@@ -49,8 +49,7 @@ function StringBuilder() {
 				else {
 					suff = "";
 				}
-
-				// this.buffer.push({"string": x, "pref": pref, "suff": suff});
+				
 				this.buffer.push(pref + x + suff);
 			}
 
@@ -119,6 +118,9 @@ function StringBuilder() {
 			lastCall = this.callstack[this.callstack.length - 1];
 			this.callstack.pop();
 
+			this.pref = '';
+			this.suff = '';
+
 			this[lastCall[0]].apply(this, lastCall[1]);
 		}
 		else {
@@ -148,11 +150,24 @@ function StringBuilder() {
 		return this;
 	};
 
-	SB.each = function(args, callback) {
+	SB.each = function suspend(args, callback) {
 		for(var i = 0; i < args.length; i += 1) {
 			callback.call(this, args[i], i, args);
 		}
 
 		return this;
+	};
+
+	SB.suspend = function suspend() {
+		return this.wrap('','');
+	};
+
+	SB.when = function when(expression, thenArgs, otherwiseArgs) {
+		if(typeof expression === "function") {
+			expression = expression();
+		}
+		
+		return this.catIf(thenArgs, expression)
+				   .catIf(otherwiseArgs, !expression);
 	};
 }(StringBuilder.prototype));
